@@ -284,6 +284,17 @@ footer li{margin:3px 0}
 [data-theme=dark] .evbar.span{background:linear-gradient(90deg,color-mix(in srgb,var(--ta) 26%,#1E1E25),color-mix(in srgb,var(--ta) 38%,#1E1E25))}
 [data-theme=dark] .evbar.t-mercari{background:#2A1618;color:#FF8A92;box-shadow:inset 0 0 0 1px #6B2228}
 [data-theme=dark] .evbar.inf{background:#2A2414;color:#F3C04F;box-shadow:none}
+/* v4: multi-day runs = uniformly filled cells (no connecting bars) */
+.day.run{background:color-mix(in srgb,var(--ta) 22%,var(--panel))!important;border-color:color-mix(in srgb,var(--ta) 45%,transparent)!important}
+.day.run.t-mercari{background:color-mix(in srgb,#FF0211 9%,var(--panel))!important;border-color:color-mix(in srgb,#FF0211 30%,transparent)!important}
+.day.run.inf{border:1.5px dashed #E8A200!important}
+.day .stripes{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:1px}
+.day .stripes i{display:block;height:4px;background:var(--ta)}
+.day .stripes i.t-mercari{background:#FF0211}
+.evbar.span,.evbar.span.cl,.evbar.span.cr,.evbar.t-mercari.span,.evbar.inf.span{background:transparent!important;box-shadow:none!important;border:none!important;line-height:20px}
+.evbar.span::before,.evbar.span::after{content:none!important}
+[data-theme=dark] .day.run{background:color-mix(in srgb,var(--ta) 30%,var(--panel))!important}
+[data-theme=dark] .evbar.span{background:transparent!important;box-shadow:none!important}
 [data-theme=dark] .mhero{background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--acc) 22%,#16161B) 0%,color-mix(in srgb,var(--bg2) 8%,#18181E) 55%,var(--panel) 100%)}
 [data-theme=dark] .cal{background:linear-gradient(170deg,color-mix(in srgb,var(--acc) 10%,var(--panel)) 0%,var(--panel) 40%)}
 [data-theme=dark] .day{background:color-mix(in srgb,#fff 3%,var(--panel))}
@@ -443,8 +454,11 @@ function monthView(m){
       const pts=(perDay[d]||[]).filter(it=>it.type==='mercari'&&/(^|[^0-9])[18]日/.test(it.name)&&/recurring/.test(it.kind||'')&&it.status!=='cancelled');
       const pt=pts.length?`<span class="pt ${pts.every(p=>p.inferred)?'inf':''}" title="Mercari 积分/还元日"></span>`:'';
       const ic=DI[k]?`<img class="dicon" loading="lazy" src="${esc(DI[k].file)}" alt="${esc(DI[k].label)}" title="${esc(DI[k].label)}（いらすとや）" onerror="this.remove()">`:'';
+      const runs=(perDay[d]||[]).filter(it=>it.os!==it.oe&&it.status!=='cancelled').sort((x,y)=>{const o=it=>it.type==='holiday'?0:it.type==='mercari'?2:1;return (o(x)-o(y))||(x.os<y.os?-1:1)});
+      const pr=runs[0];const runCls=pr?`run th-${pr.theme} t-${pr.type} ${pr.inferred?'inf':''}`:'';
+      const stripes=runs.length>1?`<div class="stripes">${runs.slice(1).map(it=>`<i class="th-${it.theme} t-${it.type}" title="${esc(it.name)}"></i>`).join('')}</div>`:'';
       const dots=(perDay[d]||[]).slice(0,6).map(it=>`<i class="th-${it.theme} t-${it.type} ${it.inferred?'inf':''}"></i>`).join('');
-      cells+=`<div class="day ${wd===5?'sat':''} ${wd===6?'sun':''} ${hol?'hol':''} ${k===tk?'today':''}" data-k="${k}" tabindex="0"><div class="dh"><span class="n">${d}</span>${pt}${ic}</div>${hidden[c]?`<div class="more">+${hidden[c]}</div>`:''}<div class="dots">${dots}</div></div>`}
+      cells+=`<div class="day ${wd===5?'sat':''} ${wd===6?'sun':''} ${hol?'hol':''} ${k===tk?'today':''} ${runCls}" data-k="${k}" tabindex="0"><div class="dh"><span class="n">${d}</span>${pt}${ic}</div>${hidden[c]?`<div class="more">+${hidden[c]}</div>`:''}<div class="dots">${dots}</div>${stripes}</div>`}
     segs.filter(sg=>sg.l<MAXL).forEach(sg=>{const it=sg.it;const mk=it.type==='holiday'?'<i class="mk">祝</i>':it.type==='kinenbi'?'<i class="mk">記</i>':it.type==='mercari'?'<i class="mk m">M</i>':'';
       bars+=`<div class="evbar th-${it.theme} t-${it.type} ${it.os!==it.oe?'span':''} ${it.inferred?'inf':''} ${it.status==='cancelled'?'cxl':''} ${sg.cl?'cl':''} ${sg.cr?'cr':''}" style="--c:${sg.c};--n:${sg.n};--l:${sg.l}" title="${esc(it.name)}">${mk}<span class="lbl">${esc(it.name)}</span></div>`});
     grid+=`<div class="wk" style="--lanes:${Math.max(used,1)}"><div class="wkcells">${cells}</div><div class="wkbars">${bars}</div></div>`}
